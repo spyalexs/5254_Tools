@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     */
 
     // Declare your algorithm object 
-    MyBug1 algo;
+    MyBug2 algo;
     //MyBug1 algo;
     
     {
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     //HW2::grade<MyBugAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, constructor_parameter_1, constructor_parameter_2, etc...);
     
     // This will reconstruct using the default constructor every trial
-    HW2::grade<MyBug1>("nonhuman.biologic@colorado.edu", argc, argv);
+    HW2::grade<MyBug2>("alex.schuler@colorado.edu", argc, argv);
 
     return 0;
 }

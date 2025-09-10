@@ -7,8 +7,9 @@
 #include <stdexcept>
 
 #define BUMP_DIST 0.001
+#define FOLLOWING_DIST 0.001
 #define FLOAT_TOL 0.000001 
-
+#define INCREMENT 0.0001
 
 /// @brief Declare your bug algorithm class here. Note this class derives the bug algorithm class declared in HW2.h
 class MyBug2 : public amp::BugAlgorithm {
@@ -23,7 +24,9 @@ class MyBug2 : public amp::BugAlgorithm {
 
         Eigen::Vector2d apply_tolerance(Eigen::Vector2d *previous_point, Eigen::Vector2d *path_point);
 
-        double findClosestPointToGoal(Eigen::Vector2d v1, Eigen::Vector2d v2, Eigen::Vector2d goal, Eigen::Vector2d *closest);
+        double findClosestPointDist(Eigen::Vector2d v1, Eigen::Vector2d v2, Eigen::Vector2d goal, Eigen::Vector2d *closest);
+
+        double euclideanDistance(Eigen::Vector2d p1, Eigen::Vector2d p2);
 
     private:
         // Add any member variables here...

@@ -33,11 +33,12 @@ amp::Path2D MyBug1::plan(const amp::Problem2D& problem) {
 
     Eigen::Vector2d prev_point = problem.q_init;
     //loop will not reached goal
-    while(path.waypoints.size() < 10000){
+    while(path.waypoints.size() < 20000000){
         Segment inter_seg;
         Eigen::Vector2d inter_point;
 
         //find next collision obstalce or move to goal
+        printf("previous point x: %f y: %f \n",prev_point.x(), prev_point.y() );
         if(!determineMoveToGoalIntersection(segments, prev_point, problem.q_goal, &inter_seg, &inter_point)){
             path.waypoints.push_back(problem.q_goal);
 
@@ -50,159 +51,96 @@ amp::Path2D MyBug1::plan(const amp::Problem2D& problem) {
         //record signature of initial segment
         Eigen::Vector2d target_point = inter_point;
         Segment current_segment = inter_seg;
-        bool moved = false;
-        bool completing_loop = false;
-        Eigen::Vector2d closest_point = inter_point;
         double closest_distance = -1;
         double dist_since_intersection = 0;
         double dist_to_closest = 0;
-        int closest_path_index;
 
+        //don't start on the obstalce
         apply_tolerance(&prev_point, &inter_point);
+        path.waypoints.push_back(inter_point);
 
-        while(path.waypoints.size() < 10000){
+        // the starting point to follow the obstalce
+        Eigen::Vector2d current_point = inter_point;
 
-            //printf("Eval Next top: %d\n", current_segment.index);
+        //point and step number thats closest to the goal
+        Eigen::Vector2d closest_point = inter_point;
+        int closest_step = 0; 
 
-            //with the autograder, it appears that a direct move across the edge of an obstacle is a collision so a tolerance is added
-            Eigen::Vector2d tol_dir = apply_tolerance(&prev_point, &target_point);
-            path.waypoints.push_back(target_point);
+        //waypoint start
+        int following_start_waypoint = path.waypoints.size();
+
+        int step_count = 0; // number of steps for which the bug has followed the obstacle
+        double previous_obstalce_clearance = BUMP_DIST; // how far the bug was from the obstalce previously
+        double d_obstalce_clearance = 0;
+        double heading = atan2(inter_seg.v2.y() - inter_seg.v1.y(), inter_seg.v2.x() - inter_seg.v1.x());
+
+        while(euclideanDistance(inter_point, current_point) > BUMP_DIST || step_count < BUMP_DIST / INCREMENT * 2){
+
+            double delta_heading = -(previous_obstalce_clearance - FOLLOWING_DIST) * fabs((previous_obstalce_clearance - FOLLOWING_DIST)) * 1000000 - d_obstalce_clearance * 1000;
+            heading += delta_heading;
+
+            Eigen::Vector2d step;
+            step.y() = INCREMENT * sin(heading);
+            step.x() = INCREMENT * cos(heading);
+
+            current_point = current_point + step;
+            path.waypoints.push_back(current_point);
+
+            //printf("Current Point x: %f y: %f\n", current_point.x(), current_point.y());
+
+            //calculate the distance from each obstalce
+            double obstalce_clearance = -1;
+            Eigen::Vector2d temp;
+            for(int i = 0; i < segments.size(); i++){
+                double segment_distance = findClosestPointDist(segments.at(i).v2, segments.at(i).v1, current_point, &temp);
+                if(segment_distance < obstalce_clearance || obstalce_clearance < 0){
+                    obstalce_clearance = segment_distance;
+                }
+            }
             
-            //record distance travelled around
-            Eigen::Vector2d diff = target_point - prev_point;
-            dist_since_intersection += diff.norm();
+            //rate of clearance change
+            d_obstalce_clearance = obstalce_clearance - previous_obstalce_clearance;
+            previous_obstalce_clearance = obstalce_clearance;
 
-            //printf("Target Point b4: %f %f Starting Point %f %f \n", target_point.x(), target_point.y(), prev_point.x(), prev_point.y());
+            step_count++;
 
-            prev_point = target_point;
-
-            //determine the next waypoint - always going to be based on endpoint2 of segment (known from ordering) (unless another intersection)
-
-            target_point = current_segment.v2;
-
-            Eigen::Vector2d current_segment_direction = current_segment.v2 - current_segment.v1;
-            current_segment_direction.normalize();
-            target_point = target_point + current_segment_direction * BUMP_DIST * 2;
-
-            //if completing loop around - target initial intersection point
-            completing_loop = false;
-            if(current_segment.index == inter_seg.index && moved){
-                printf("Here: %d, %d\n", current_segment.index, current_segment.index == inter_seg.index);
-                target_point = inter_point;
-                completing_loop = true;
+            //keep track of the closest point to the goal
+            if((closest_distance < 0 || closest_distance > euclideanDistance(problem.q_goal, current_point))){
+                closest_distance = euclideanDistance(problem.q_goal, current_point);
+                closest_point = current_point;
+                closest_step = step_count;
+                
             }
 
-            //printf("Target Point: %f %f Starting Point %f %f \n", target_point.x(), target_point.y(), prev_point.x(), prev_point.y());
-
-            if(!determineMoveToGoalIntersection(segments, prev_point, target_point, &current_segment, &target_point)){
-
-                if(completing_loop){
-                    path.waypoints.push_back(target_point);
-
-                    //printf("Closest point to goal is: %f %f", closest_point.x(), closest_point.y());
-
-                    break;
-
-                    //check to ensure that the exit point is closer than the entry point
-                    Eigen::Vector2d inter_goal_diff = problem.q_goal - inter_point;
-                    if(closest_distance >= inter_goal_diff.norm()){
-                        //didn't move closer, must be trapped
-                        throw std::runtime_error("No possible paths detected!");
-
-                    }
-                }
-
-                //determine the next segment to follow
-                //printf("Eval: %d\n", current_segment.index);
-                if(current_segment.index + 1 >= segments.size()){
-                    current_segment = segments.at(current_segment.index - current_segment.intra_index);
-                }else if(current_segment.obstacle_index != segments.at(current_segment.index + 1).obstacle_index){
-                    current_segment = segments.at(current_segment.index - current_segment.intra_index);
-                }else{
-                    current_segment = segments.at(current_segment.index + 1);
-                }
-
-                //printf("Eval Next: %d V1: %f %f V2: %f %f \n", current_segment.index, current_segment.v1.x(), current_segment.v1.y(), current_segment.v2.x(), current_segment.v2.y());
-
-            } else{
-                //printf("I got an intersection at: %f %f \n", target_point.x(), target_point.y());
-
+            //totally never need this
+            if(step_count > 3000000){
+                return path;
             }
-
-            //determine if the closest point on the previous segment is the closest point to the goal
-        
-            Eigen::Vector2d segment_closest;
-            double distance_from_goal = findClosestPointToGoal(prev_point, target_point, problem.q_goal, &segment_closest);
-            if(distance_from_goal < closest_distance || closest_distance < 0){
-                closest_distance = distance_from_goal;
-                closest_point = segment_closest;
-                dist_to_closest = dist_since_intersection;
-                closest_path_index = path.waypoints.size();
-            }
-
-            moved = true;
+            
         }
 
-        //move to the closest point to the goal
-        if(dist_to_closest * 2 > dist_since_intersection){
-            //shorter to go backward
-            for(int i = path.waypoints.size() - 2; i >= closest_path_index; i--){
+        printf("Closest point x: %f y: %f step: %d\n", closest_point.x(), closest_point.y(), closest_step);
+            
+        //determine the clostest direction of travel around the obstalce
+        if(closest_step > step_count / 2){
+            //go in reverse
+            
+            int end_size = path.waypoints.size();
+            for(int i = end_size - 1; i >= end_size - (step_count - closest_step); i--){
                 path.waypoints.push_back(path.waypoints.at(i));
             }
 
-            path.waypoints.push_back(closest_point);
         } else {
-            for(int i = intersection_path_index; i < closest_path_index; i++){
+
+            for(int i = following_start_waypoint; i < following_start_waypoint + (closest_step); i++){
                 path.waypoints.push_back(path.waypoints.at(i));
             }
-
-            path.waypoints.push_back(closest_point);
         }
 
-        prev_point = closest_point;
-
+        prev_point = path.waypoints.at(path.waypoints.size() - 1);
     }
 
-    // for(int i = 0; i < 200; i++){
-    //     printf("Waypoint %d: X: %f, %f\n", i, path.waypoints.at(i).x(), path.waypoints.at(i).y());
-    // }
 
-    // printf("x_vals = [");
-    // for(int i = 0; i < 200; i++){
-    //     printf("%f, ", path.waypoints.at(i).x());
-    // }
-    // printf("];\n");
-
-    // printf("y_vals = [");
-    // for(int i = 0; i < 200; i++){
-    //     printf("%f, ", path.waypoints.at(i).y());
-    // }
-    // printf("];\n");
-
-    // printf("\n\nhold on\n");
-
-
-    // for(int i = 0; i < problem.obstacles.size(); i++){
-    //     printf("ob_%d = [", i);
-    //     for(int j = 0; j < problem.obstacles.at(i).verticesCW().size(); j++){
-    //         printf("[%f, %f];", problem.obstacles.at(i).verticesCW().at(j).x(), problem.obstacles.at(i).verticesCW().at(j).y());
-    //     }
-    //     printf("[%f, %f];", problem.obstacles.at(i).verticesCW().at(0).x(), problem.obstacles.at(i).verticesCW().at(0).y());
-    //     printf("];\n");
-
-    //     printf("plot(ob_%d(:, 1), ob_%d(:, 2))\n", i, i);
-    // }
-
-    // printf("hold off\n\n");
-
-    // printf("goal %f %f", problem.q_goal.x(), problem.q_goal.y());
-    // Your algorithm solves the problem and generates a path. Here is a hard-coded to path for now...
-    
-    // path.waypoints.push_back(Eigen::Vector2d(1.0, 1.0));
-    // path.waypoints.push_back(Eigen::Vector2d(4.0, 1.0));
-    // path.waypoints.push_back(Eigen::Vector2d(5.0, 3.0));
-    // path.waypoints.push_back(Eigen::Vector2d(5.0, 7.0));
-    // path.waypoints.push_back(problem.q_goal);
 
     return path;
 }
@@ -298,7 +236,7 @@ bool MyBug1::findSegmentIntersection(const Eigen::Vector2d &p1, const Eigen::Vec
 
 
 //I had chatgpt inspire me on the best way to go about this... I wrote myself
-double MyBug1::findClosestPointToGoal(Eigen::Vector2d v1, Eigen::Vector2d v2, Eigen::Vector2d goal, Eigen::Vector2d *closest){
+double MyBug1::findClosestPointDist(Eigen::Vector2d v1, Eigen::Vector2d v2, Eigen::Vector2d goal, Eigen::Vector2d *closest){
 
     //find the point on the line in which the vector from the segment to the goal is perpendicular to the segment itself
     Eigen::Vector2d segment_diff = v2 - v1;
@@ -313,6 +251,14 @@ double MyBug1::findClosestPointToGoal(Eigen::Vector2d v1, Eigen::Vector2d v2, Ei
     Eigen::Vector2d goal_diff = *closest - goal;
 
     return goal_diff.norm();
+}
+
+double MyBug1::euclideanDistance(Eigen::Vector2d p1, Eigen::Vector2d p2){
+
+    Eigen::Vector2d point_diff = p1 - p2;
+
+    return point_diff.norm();
+
 }
 
 
