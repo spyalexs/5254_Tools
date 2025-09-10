@@ -100,6 +100,7 @@ amp::Path2D MyBug2::plan(const amp::Problem2D& problem) {
             Eigen::Vector2d m_line_inter_point;
             if(determineMoveToGoalIntersection(m_line, current_point, current_point + step, &inter_seg, &m_line_inter_point)){
                 if(euclideanDistance(problem.q_goal, current_point + step) < inter_goal_dist - BUMP_DIST){
+                    //switch back to move to goal
                     path.waypoints.push_back(m_line_inter_point);
                     break;
                 }
@@ -189,7 +190,7 @@ Eigen::Vector2d MyBug2::apply_tolerance(Eigen::Vector2d *previous_point, Eigen::
 }
 
 
-//I had chatgpt write the base for this function! 
+//I had chatgpt write the base for this function! Turns out it didn't consider ALL of the cases... ;(
 //Prompt: write a function that determines the point of intersection of two lines in cpp. The vertexes of each thing will be passed as eigen::vector2d
 // Function to find the intersection of two lines represented by two points each
 bool MyBug2::findSegmentIntersection(const Eigen::Vector2d &p1, const Eigen::Vector2d &p2, const Eigen::Vector2d &q1, const Eigen::Vector2d &q2, Eigen::Vector2d *inter) {
