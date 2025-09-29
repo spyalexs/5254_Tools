@@ -3,6 +3,8 @@
 
 // Include the correct homework header
 #include "hw/HW5.h"
+#include "hw/HW2.h"
+
 
 // Include any custom headers you created in your workspace
 #include "MyGDAlgorithm.h"
@@ -16,15 +18,17 @@ int main(int argc, char** argv) {
     // Test your gradient descent algorithm on a random problem.
     MyGDAlgorithm algo(1.0, 1.0, 1.0, 1.0);
     Path2D path;
-    Problem2D prob;
-    bool success = HW5::generateAndCheck(algo, path, prob);
+    Problem2D prob = amp::HW2::getWorkspace2();
+    //bool success = HW5::generateAndCheck(algo, path, prob);
+    path = algo.plan(prob);
+
     Visualizer::makeFigure(prob, path);
 
     // Visualize your potential function
-    Visualizer::makeFigure(MyPotentialFunction{}, prob, 30);
+    Visualizer::makeFigure(*algo.func, prob, 30);
     Visualizer::saveFigures();
     
     // Arguments following argv correspond to the constructor arguments of MyGDAlgorithm:
-    HW5::grade<MyGDAlgorithm>("nonhuman.biologic@myspace.edu", argc, argv, 1.0, 1.0, 1.0, 1.0);
+    //HW5::grade<MyGDAlgorithm>("alex.schuler@colorado.edu", argc, argv, 1.0, 1.0, 1.0, 1.0);
     return 0;
 }
