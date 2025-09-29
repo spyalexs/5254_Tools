@@ -17,4 +17,7 @@ class MyManipulator2D : public amp::LinkManipulator2D {
 
         // Override this method for implementing inverse kinematics
         virtual amp::ManipulatorState getConfigurationFromIK(const Eigen::Vector2d& end_effector_location) const override;
+
+        //apply a two D rotation matrix
+        Eigen::Vector2d applyRotMat(const Eigen::Vector2d link, const double theta) const;
 };
