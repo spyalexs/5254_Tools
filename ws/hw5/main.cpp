@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     // Test your gradient descent algorithm on a random problem.
     MyGDAlgorithm algo(1.0, 1.0, 1.0, 1.0);
     Path2D path;
-    Problem2D prob = amp::HW2::getWorkspace2();
+    Problem2D prob = amp::HW2::getWorkspace1();
     //bool success = HW5::generateAndCheck(algo, path, prob);
     path = algo.plan(prob);
 

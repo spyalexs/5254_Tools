@@ -22,6 +22,9 @@ class MyPotentialFunction : public amp::PotentialFunction2D {
 
 		Eigen::Vector2d findClosestPoint(Eigen::Vector2d v1, Eigen::Vector2d v2, Eigen::Vector2d goal) const;
 
+		Eigen::Vector2d getObstacleCentroid(const amp::Obstacle2D& obs) const;
+
+
 
 
 	private: 
@@ -30,6 +33,8 @@ class MyPotentialFunction : public amp::PotentialFunction2D {
 		double zetta;
 		double q_star;
 		double eta;
+		double q_star_c = 4;
+		double eta_c = 1000;
 		std::vector<amp::Obstacle2D> obstacles;
 };
 

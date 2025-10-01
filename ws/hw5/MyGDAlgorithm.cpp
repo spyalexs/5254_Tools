@@ -3,7 +3,7 @@
 // Implement your plan method here, similar to HW2:
 amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
     //create a potential function
-    func = new MyPotentialFunction(problem.q_goal, 2, 2, 10, 5, problem.obstacles);
+    func = new MyPotentialFunction(problem.q_goal, 2, 2, .1, 5, problem.obstacles);
 
 
     amp::Path2D path;
@@ -12,7 +12,7 @@ amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
 
 
     int steps = 50000;
-    Eigen::Vector2d current_position = problem.q_init + Eigen::Vector2d(0.1,0.0);
+    Eigen::Vector2d current_position = problem.q_init ;//+ Eigen::Vector2d(-0.0000001,0.0);
     while(steps > 0){
         Eigen::Vector2d grad = func->getGradient(Eigen::Vector2d(current_position[1], current_position[0]));
         grad.normalize();
@@ -61,11 +61,36 @@ Eigen::Vector2d MyPotentialFunction::getGradient(const Eigen::Vector2d& q) const
     for(int i = 0; i < obstacles.size(); i++){
         //determine the closest point to the obstalce
         Eigen::Vector2d obstacle_point = getClosestPointToObstacle(qc, obstacles.at(i));
+        Eigen::Vector2d obstacle_center = getObstacleCentroid(obstacles.at(i));
+
 
         if((obstacle_point - qc).norm() < q_star){
             dx_repulsive += eta * (1/(obstacle_point - qc).norm() - 1 / q_star) / (obstacle_point - qc).norm() / (obstacle_point - qc).norm() / (obstacle_point - qc).norm() * (qc[0] - obstacle_point[0]);
             dy_repulsive += eta * (1/(obstacle_point - qc).norm() - 1 / q_star) / (obstacle_point - qc).norm() / (obstacle_point - qc).norm() / (obstacle_point - qc).norm() * (qc[1] - obstacle_point[1]);
-        }
+
+            // if((obstacle_center - qc).norm() < q_star_c){
+            //be sure to steer a little bit away from the center
+            double dx = eta_c * (1/(obstacle_center - qc).norm() - 1 / q_star_c) / (obstacle_center - qc).norm() / (obstacle_center - qc).norm() / (obstacle_center - qc).norm() * (qc[0] - obstacle_center[0]);
+            dx_repulsive += dx;
+            double dy = eta_c * (1/(obstacle_center - qc).norm() - 1 / q_star_c) / (obstacle_center - qc).norm() / (obstacle_center - qc).norm() / (obstacle_center - qc).norm() * (qc[1] - obstacle_center[1]);
+            dy_repulsive += dy;
+
+                //printf("Repelling from obstalce at (%f, %f) with (%f, %f)\n",  dx_repulsive,  dy_repulsive, dx, dy);
+
+            //}
+
+        } 
+
+         
+        
+        // if((obstacle_center - qc).norm() < q_star_c){
+        //     double dx = eta_c * (1/(obstacle_center - qc).norm() - 1 / q_star_c) / (obstacle_center - qc).norm() / (obstacle_center - qc).norm() / (obstacle_center - qc).norm() * (qc[0] - obstacle_center[0]);
+        //     dx_repulsive += dx;
+        //     double dy = eta_c * (1/(obstacle_center - qc).norm() - 1 / q_star_c) / (obstacle_center - qc).norm() / (obstacle_center - qc).norm() / (obstacle_center - qc).norm() * (qc[1] - obstacle_center[1]);
+        //     dy_repulsive += dy;
+
+        //     //printf("Repelling from obstalce at (%f, %f) with (%f, %f)\n",  obstacle_center[0],  obstacle_center[0], dx, dy);
+        // } 
 
         //printf("Obstalce Closest Point: %f %f to q: %f %f \n", obstacle_point[0], obstacle_point[1], q[0], q[1]);
 
@@ -98,6 +123,20 @@ Eigen::Vector2d MyPotentialFunction::getClosestPointToObstacle(const Eigen::Vect
     }
 
     return closest;
+}
+
+Eigen::Vector2d MyPotentialFunction::getObstacleCentroid(const amp::Obstacle2D& obs) const{
+    //return the closest point on each obstacle to the evaluation point q
+
+    Eigen::Vector2d centroid(0,0);
+    double dist_closest = -1;
+    for(int i = 0; i < obs.verticesCW().size(); i++){
+        centroid += obs.verticesCW().at(i);
+    }
+
+    centroid = centroid / obs.verticesCW().size();
+
+    return centroid;
 }
 
 //I had chatgpt inspire me on the best way to go about this... I wrote myself
