@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <Eigen/Core>
+#include <queue>
 
 #include "tools/Serializer.h"
 
@@ -66,7 +67,7 @@ class ConfigurationSpace2D {
         /// @param x0 Value of the first configuration space variable
         /// @param x1 Value of the second configuration space variable
         /// @return `true` if the the point is in collision, `false` if it is not
-        virtual bool inCollision(double x0, double x1) const = 0;
+        virtual bool inCollision(double x0, double x1, bool direct) const = 0;
 
         /*****************************************/
 
@@ -144,8 +145,12 @@ class GridCSpace2D : public ConfigurationSpace2D, public DenseArray2D<bool> {
         GridCSpace2D(std::size_t x0_cells, std::size_t x1_cells, double x0_min, double x0_max, double x1_min, double x1_max)
             : ConfigurationSpace2D(x0_min, x0_max, x1_min, x1_max)
             , DenseArray2D<bool>(x0_cells, x1_cells)
-            {}
+            {
+                num_cells = x0_cells;
+            }
 
+
+        std::size_t num_cells;
         /******* User Implemented Methods ********/
         
         /// @brief Given a point in continuous space that is between the bounds, determine what cell (i, j) that the point is in
@@ -153,6 +158,7 @@ class GridCSpace2D : public ConfigurationSpace2D, public DenseArray2D<bool> {
         /// @param x1 Value of the second configuration space variable
         /// @return A pair (i, j) of indices that correspond to the cell that (x0, x1) is in
         virtual std::pair<std::size_t, std::size_t> getCellFromPoint(double x0, double x1) const = 0;
+        virtual Eigen::Vector2d getCellCenter(int x0, int x1) const =0;
 
         /*****************************************/
 
@@ -161,7 +167,11 @@ class GridCSpace2D : public ConfigurationSpace2D, public DenseArray2D<bool> {
         /// @param x0 Value of the first configuration space variable
         /// @param x1 Value of the second configuration space variable
         /// @return A pair (i, j) of indices that correspond to the cell that (x0, x1) is in
-        virtual bool inCollision(double x0, double x1) const override {
+        virtual bool inCollision(double x0, double x1, bool direct=false) const override {
+            if(direct){
+                return operator()(std::size_t(x0), std::size_t(x1));
+            }
+
             auto[i, j] = getCellFromPoint(x0, x1);
             return operator()(i, j);
         }

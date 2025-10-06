@@ -3,7 +3,7 @@
 // Implement your plan method here, similar to HW2:
 amp::Path2D MyGDAlgorithm::plan(const amp::Problem2D& problem) {
     //create a potential function
-    func = new MyPotentialFunction(problem.q_goal, 2, 2, .1, 5, problem.obstacles);
+    func = new MyPotentialFunction(problem.q_goal, 2, 5, .1, 5, problem.obstacles);
 
 
     amp::Path2D path;

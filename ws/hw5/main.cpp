@@ -22,6 +22,9 @@ int main(int argc, char** argv) {
     //bool success = HW5::generateAndCheck(algo, path, prob);
     path = algo.plan(prob);
 
+    //calculate the path length
+    printf("Path length %f\n", path.length());
+
     Visualizer::makeFigure(prob, path);
 
     // Visualize your potential function
@@ -29,6 +32,6 @@ int main(int argc, char** argv) {
     Visualizer::saveFigures();
     
     // Arguments following argv correspond to the constructor arguments of MyGDAlgorithm:
-    //HW5::grade<MyGDAlgorithm>("alex.schuler@colorado.edu", argc, argv, 1.0, 1.0, 1.0, 1.0);
+    HW5::grade<MyGDAlgorithm>("alex.schuler@colorado.edu", argc, argv, 1.0, 1.0, 1.0, 1.0);
     return 0;
 }
