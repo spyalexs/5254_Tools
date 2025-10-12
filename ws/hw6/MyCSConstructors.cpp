@@ -84,7 +84,9 @@ std::unique_ptr<amp::GridCSpace2D> MyManipulatorCSConstructor::construct(const a
                 }
             }
         }
-     }
+    }
+
+    cspace.m_link_lengths = manipulator.getLinks();
 
     // Returning the object of type std::unique_ptr<MyGridCSpace2D> can automatically cast it to a polymorphic base-class pointer of type std::unique_ptr<amp::GridCSpace2D>.
     // The reason why this works is not super important for our purposes, but if you are curious, look up polymorphism!
@@ -295,18 +297,43 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
     printf("Beginning Checks, qinit: %f %f q_goal: %f %f grid_size: %ld %ld \n", q_init[0], q_init[1], q_goal[0], q_goal[1], grid_cspace.num_cells, grid_cspace.num_cells);
 
 
+
     std::pair<std::size_t, std::size_t> q_init_cell = grid_cspace.getCellFromPoint(q_init[0], q_init[1]);
+    if(grid_cspace.inCollision(q_init_cell.first, q_init_cell.second, true)){
+        printf("Flipping it\n");
+        
+        MyManipulator2D mani;
+        mani.setLinks(grid_cspace.m_link_lengths);
+
+        Eigen::Vector2d mani_state(q_init[0], q_init[1]);
+        Eigen::Vector2d pos = mani.getJointLocation(mani_state, 2);
+        amp::ManipulatorState second_state = mani.getConfigurationFromIK(pos, false);
+
+        q_init_cell = grid_cspace.getCellFromPoint(second_state[0], second_state[1]);
+    }
+
     std::pair<std::size_t, std::size_t> q_goal_cell = grid_cspace.getCellFromPoint(q_goal[0], q_goal[1]);
+    if(grid_cspace.inCollision(q_goal_cell.first, q_goal_cell.second, true)){
+
+        MyManipulator2D mani;
+        mani.setLinks(grid_cspace.m_link_lengths);
+
+        Eigen::Vector2d mani_state(q_goal[0], q_goal[1]);
+        Eigen::Vector2d pos = mani.getJointLocation(mani_state, 2);
+        amp::ManipulatorState second_state = mani.getConfigurationFromIK(pos, false);
+
+        q_goal_cell = grid_cspace.getCellFromPoint(second_state[0], second_state[1]);
+    }
 
     //open q_init
     printf("x: %d y: %d\n", q_init_cell.first, q_init_cell.second);
     child_cells.push(Cell(Eigen::Vector2i(q_init_cell.first, q_init_cell.second)));
-    printf("H\n");
     checked_mat(q_init_cell.first, q_init_cell.second) = true;
-    printf("Hellow\n");
 
     printf("Beginning Checks, qinit cell: %d %d q_goal_cell: %d %d \n", q_init_cell.first, q_init_cell.second, q_goal_cell.first, q_goal_cell.second);
 
+
+    int neighbors_evaluted = 0;
     while(!goal_found){
         Cell test = child_cells.front();
 
@@ -315,7 +342,7 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
 
         if(test.location == Eigen::Vector2i(q_goal_cell.first, q_goal_cell.second)){
             //found goal
-            printf("Found Goal\n");
+            printf("Found Goal\n\n\n\n\n\n\n");
             break;
         }
 
@@ -327,11 +354,13 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
 
             if((checked_mat(std::max(test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[0], 0), std::max(test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[1], 0)) == false) && (test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[0] >= 0) && (test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[1] >= 0) && (test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[0] < grid_cspace.num_cells) && (test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[1] < grid_cspace.num_cells)){
 
-                //printf("Here %d %d \n", test.get_neighbors(looped, grid_cspace.num_cells).at(i)[0], test.get_neighbors(looped, grid_cspace.num_cells).at(i)[1]);
+                //printf("Here %d %d \n", test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[0], test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[1]);
+
 
                 //if collision free
                 if(grid_cspace.inCollision(test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[0], test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)[1], true) == false){
 
+                    neighbors_evaluted++;
 
                     //create a new child node
                     child_cells.push(Cell(test.get_neighbors(allow_looping, grid_cspace.num_cells).at(i)));
@@ -348,12 +377,13 @@ amp::Path2D MyWaveFrontAlgorithm::planInCSpace(const Eigen::Vector2d& q_init, co
                 }
 
             }
+
         }
 
         child_cells.pop();
 
         if(child_cells.size() == 0){
-            printf("Failed to find a valid path. Searched %ld cells\n", open_cells.size());
+            printf("Failed to find a valid path. Searched %ld cells and %d neighbors\n", open_cells.size(), neighbors_evaluted);
 
             if(open_cells.size() == 1){
                 printf("q_init is %d\n", grid_cspace.inCollision(open_cells.front().location[0], open_cells.front().location[1]), true);

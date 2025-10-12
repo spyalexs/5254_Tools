@@ -65,7 +65,7 @@ Eigen::Vector2d MyManipulator2D::applyRotMat(const Eigen::Vector2d link, const d
 }
 
 // Override this method for implementing inverse kinematics
-amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vector2d& end_effector_location) const {
+amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vector2d& end_effector_location, bool flipped) const {
     // Implement inverse kinematics here
 
     printf("RQ %f %f -- ", end_effector_location(0), end_effector_location(1));
@@ -79,6 +79,9 @@ amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vecto
 
         //use the lecture equations to solve for the other two links
         double t2 = acos(1 / (2*(m_link_lengths.at(0) * m_link_lengths.at(1))) * ((p2(0) * p2(0) + p2(1) * p2(1)) - (m_link_lengths.at(0) * m_link_lengths.at(0) + m_link_lengths.at(1) * m_link_lengths.at(1))));
+        if(flipped){
+            t2 = -t2;
+        }
         double t1 = acos(1 / ((p2(0) * p2(0) + p2(1) * p2(1))) * (p2(0) * (m_link_lengths.at(0) + m_link_lengths.at(1) * cos(t2)) + p2(1) * m_link_lengths.at(1) * sqrt(1 - cos(t2) * cos(t2))));
 
         joint_angles(0) = t1;

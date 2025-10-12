@@ -147,6 +147,7 @@ class GridCSpace2D : public ConfigurationSpace2D, public DenseArray2D<bool> {
             , DenseArray2D<bool>(x0_cells, x1_cells)
             {
                 num_cells = x0_cells;
+
             }
 
 
@@ -178,6 +179,10 @@ class GridCSpace2D : public ConfigurationSpace2D, public DenseArray2D<bool> {
 
         /// @brief Virtual dtor
         virtual ~GridCSpace2D() {}
+
+        std::vector<double> m_link_lengths;
+        
+
 };
 
 }

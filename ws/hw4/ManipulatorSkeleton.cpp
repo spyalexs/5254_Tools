@@ -2,7 +2,7 @@
 
 
 MyManipulator2D::MyManipulator2D()
-    : LinkManipulator2D({0.5, 1.0, 0.5}) // Default to a 2-link with all links of 1.0 length
+    : LinkManipulator2D({1.0, 1.0}) // Default to a 2-link with all links of 1.0 length
 {}
 
 // Override this method for implementing forward kinematics
@@ -65,7 +65,7 @@ Eigen::Vector2d MyManipulator2D::applyRotMat(const Eigen::Vector2d link, const d
 }
 
 // Override this method for implementing inverse kinematics
-amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vector2d& end_effector_location) const {
+amp::ManipulatorState MyManipulator2D::getConfigurationFromIK(const Eigen::Vector2d& end_effector_location, , bool flipped = false) const {
     // Implement inverse kinematics here
 
     printf("RQ %f %f -- ", end_effector_location(0), end_effector_location(1));

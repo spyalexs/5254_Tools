@@ -99,6 +99,7 @@ class ManipulatorWaveFrontAlgorithm : public LinkManipulatorMotionPlanner2D {
         /// @param problem A planning problem with workspace obstacles and init/goal end effector locations
         /// @return A sequence of ManipulatorStates that takes the manipulator from the q_init location to q_goal
         virtual amp::ManipulatorTrajectory2Link plan(const LinkManipulator2D& link_manipulator_agent, const amp::Problem2D& problem) override {
+            printf("Manipulator has %d links\n", link_manipulator_agent.nLinks());
             ASSERT(link_manipulator_agent.nLinks() == 2, "Manipulator must have two links");
 
             // Get the initial state from IK

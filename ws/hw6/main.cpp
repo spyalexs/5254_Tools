@@ -16,11 +16,11 @@ int main(int argc, char** argv) {
 
     // You will need your 2-link manipulator from HW4
     MyManipulator2D manipulator;
-    Problem2D point_problem = HW5::getWorkspace1();
-    Problem2D manip_problem = HW6::getHW4Problem2();
+    Problem2D point_problem = HW2::getWorkspace2();
+    Problem2D manip_problem = HW6::getHW4Problem3();
     
     // Construct point-agent and manipulator cspace instances.
-    std::size_t n_cells = 500;
+    std::size_t n_cells = 390;
     std::shared_ptr<MyPointAgentCSConstructor> point_agent_ctor = std::make_shared<MyPointAgentCSConstructor>(n_cells);
     std::shared_ptr<MyManipulatorCSConstructor> manipulator_ctor = std::make_shared<MyManipulatorCSConstructor>(n_cells);
     std::shared_ptr<WaveFrontAlgorithm> wf_algo = std::make_shared<MyWaveFrontAlgorithm>();
@@ -32,6 +32,7 @@ int main(int argc, char** argv) {
     // Return a path for the point-agent and manipulator using c-space planning.
     Path2D path = point_algo.plan(point_problem);
     Visualizer::makeFigure(point_problem, path); // Visualize path in workspace
+    printf("Path Length: %f\n", path.length());
     Visualizer::makeFigure(*point_algo.getCSpace(), path); // Visualize path in cspace
 
     ManipulatorTrajectory2Link trajectory = manip_algo.plan(manipulator, manip_problem);
@@ -39,10 +40,12 @@ int main(int argc, char** argv) {
     Visualizer::makeFigure(*manip_algo.getCSpace(), trajectory);
 
     // // For Exercise 3, you will need to implement the A* algorithm.
-    // ShortestPathProblem problem = HW6::getEx3SPP();
-    // LookupSearchHeuristic heuristic = HW6::getEx3Heuristic();
-    // MyAStarAlgo algo;
-    // MyAStarAlgo::GraphSearchResult result = algo.search(problem, heuristic);
+    ShortestPathProblem problem = HW6::getEx3SPP();
+    LookupSearchHeuristic heuristic = HW6::getEx3Heuristic();
+    MyAStarAlgo algo;
+    MyAStarAlgo::GraphSearchResult result = algo.search(problem, heuristic);
+
+    bool success = amp::HW6::generateAndCheck(algo, result, problem);
 
     Visualizer::saveFigures();
 

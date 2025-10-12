@@ -9,6 +9,8 @@
 
 #include "segment.h"
 
+#include "ManipulatorSkeleton.h"
+
 #define FLOAT_TOL .000001
 
 ////////////////////// THIS IS FROM HW4 //////////////////////
@@ -103,10 +105,13 @@ class MyPointAgentCSConstructor : public amp::PointAgentCSConstructor {
 };
 
 class MyWaveFrontAlgorithm : public amp::WaveFrontAlgorithm {
+
     public:
         virtual amp::Path2D planInCSpace(const Eigen::Vector2d& q_init, const Eigen::Vector2d& q_goal, const amp::GridCSpace2D& grid_cspace, bool isManipulator) override;
 
         bool allow_looping = false;
+
+
 
 };
 

@@ -46,7 +46,7 @@ class LinkManipulator2D {
         /// @brief Set the configuration (link attributes) give an end effector location using Inverse Kinematics
         /// @param end_effector_location End effector coordinate
         /// @return Joint angle state (radians) in increasing joint index order. Must have size() ==nLinks()
-        virtual ManipulatorState getConfigurationFromIK(const Eigen::Vector2d& end_effector_location) const = 0;
+        virtual ManipulatorState getConfigurationFromIK(const Eigen::Vector2d& end_effector_location, bool flipped=true) const = 0;
 
         /*****************************************/
 
@@ -76,9 +76,20 @@ class LinkManipulator2D {
 
         /// @brief Virtual dtor
         virtual ~LinkManipulator2D() {}
+
+        std::vector<double> getLinks()const{
+            return m_link_lengths;
+        };
+
+        void setLinks(std::vector<double> links){
+            m_link_lengths = links;
+        };
+        
+
     protected:
         Eigen::Vector2d m_base_location = Eigen::Vector2d(0.0, 0.0);
         std::vector<double> m_link_lengths;
+
 };
 
 ManipulatorState2Link convert(const ManipulatorState& state_2_link);

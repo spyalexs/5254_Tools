@@ -122,7 +122,7 @@ class GraphTools {
 		/// @param max_outgoing_edges_per_node Maximum spanning factor for outgoing edges. Increase for more edges in graph
 		/// @param connectedness Number in [0, 1] that dictates how connected the graph is (0 produces a DAG, 1 has high connectivity)
 		/// @return Shared point to a graph object
-		static std::shared_ptr<Graph<double>> generateRandomGraphDouble(uint32_t n_nodes, double min_edge_weight = 0.0, double max_edge_weight = 10.0, uint32_t max_outgoing_edges_per_node = 5, double connectedness = 0.5, uint32_t seed = 0u);
+		static std::shared_ptr<Graph<double>> generateRandomGraphDouble(uint32_t n_nodes, double min_edge_weight = 10.0, double max_edge_weight = 100.0, uint32_t max_outgoing_edges_per_node = 5, double connectedness = 0.5, uint32_t seed = 0u);
 
 		/// @brief Generate a random Shortest Path Problem
 		/// @param n_nodes Number of nodes in the graph
